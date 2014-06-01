@@ -14,4 +14,4 @@ Ce qui fonctionne pour le moment:
 Bugs connus:
 
 * Gestion des "note off" incohérents
-
+* Le seul bouton de la fenêtre ne sert à rien
