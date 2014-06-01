@@ -21,12 +21,10 @@ Choses à faire:
 * Son carré
 * Son triangle
 * Son dent de scie
-
 * Ajout de 2 sons
 * Soustraction de 2 sons
 * Modulation d'amplitude
 * Modulation de fréquence
 * Limiteur de signal
-
 * Son polyphonique
 * Pitch Bend
