@@ -3,22 +3,24 @@
 SinusOnJack::SinusOnJack(QObject *parent) :
 	QThread(parent)
 {
-	m_clientIsOpen = false;
-	m_clientIsActive = false;
+	m_clientOpened = false;
+	m_clientActived = false;
 	m_client = NULL;
 	m_continue = false;
 	m_cycle = 0;
 	m_offset = 0;
-	m_portAudioOut = NULL;
+	m_portAudioOutLeft = NULL;
+	m_portAudioOutRight = NULL;
 	m_portMidiIn = NULL;
 	m_sampleInCycle = 0;
 	m_sampleRate = 0;
-	m_tone = 440;
+	m_tune = 440;
 	m_velocityEnabled = true;
+	m_waveType = Sinusoide;
 	int i;
 	for(i = 0; i < 128; ++i)
 	{
-		m_noteFrqs[i] = (2.0 * 440.0 / 32.0) * pow( 2, (((jack_default_audio_sample_t)i - 9.0) / 12.0)) / m_sampleRate;
+		m_noteFrqs[i] = (2.0 * m_tune / 32.0) * pow( 2, (((jack_default_audio_sample_t)i - 9.0) / 12.0)) / m_sampleRate;
 	}
 	m_ramp = 0.0;
 }
@@ -40,8 +42,11 @@ int SinusOnJack::process(jack_nframes_t nframes)
 	m_sampleInCycle = nframes;
 	int i;
 	void* portMidiInBuffer = jack_port_get_buffer(m_portMidiIn, nframes);
-	jack_default_audio_sample_t* out =
-			(jack_default_audio_sample_t*)jack_port_get_buffer(m_portAudioOut,
+	jack_default_audio_sample_t* outLeft =
+			(jack_default_audio_sample_t*)jack_port_get_buffer(m_portAudioOutLeft,
+																												 nframes);
+	jack_default_audio_sample_t* outRight =
+			(jack_default_audio_sample_t*)jack_port_get_buffer(m_portAudioOutRight,
 																												 nframes);
 	jack_midi_event_t inEvent;
 	jack_nframes_t eventIndex = 0;
@@ -69,7 +74,8 @@ int SinusOnJack::process(jack_nframes_t nframes)
 												eventIndex);
 		m_ramp += m_noteFrqs[m_note];
 		m_ramp = (m_ramp > 1.0) ? m_ramp - 2.0 : m_ramp;
-		out[i] = m_noteOn*sin(2*M_PI*m_ramp);
+		outLeft[i] = m_noteOn*sin(2*M_PI*m_ramp);
+		outRight[i] = outLeft[i];
 	}
 	return 0;
 }
@@ -119,47 +125,53 @@ void SinusOnJack::run()
 															"default");
 	if (m_client)
 		{
-			m_clientIsOpen = true;
+			m_clientOpened = true;
 			emit clientIsOpen();
 		}
 	else
 		{
-			m_clientIsOpen = false;
+			m_clientOpened = false;
 			emit clientIsNotOpen();
 		}
-	emit clientOpened(m_clientIsOpen);
+	emit clientOpened(m_clientOpened);
 
 	jack_set_process_callback(m_client, SinusOnJack::staticProcess, this);
 	jack_set_sample_rate_callback(m_client, SinusOnJack::staticSampleRate, this);
 	jack_on_shutdown(m_client, SinusOnJack::staticJackShutdown, this);
 
 	m_sampleRate = jack_get_sample_rate(m_client);
-	m_portAudioOut = jack_port_register(m_client,
-																			"Output",
-																			JACK_DEFAULT_AUDIO_TYPE,
-																			JackPortIsOutput|
-																			JackPortIsTerminal,
-																			0);
 	m_portMidiIn = jack_port_register(m_client,
 																		"Input",
 																		JACK_DEFAULT_MIDI_TYPE,
 																		JackPortIsInput|
 																		JackPortIsTerminal,
 																		0);
+	m_portAudioOutLeft = jack_port_register(m_client,
+																					"Left Output",
+																					JACK_DEFAULT_AUDIO_TYPE,
+																					JackPortIsOutput|
+																					JackPortIsTerminal,
+																					0);
+	m_portAudioOutRight = jack_port_register(m_client,
+																					 "Right Output",
+																					 JACK_DEFAULT_AUDIO_TYPE,
+																					 JackPortIsOutput|
+																					 JackPortIsTerminal,
+																					 0);
 
 	int error;
 	error = jack_activate(m_client);
 	if (error == 0)
 		{
-			m_clientIsActive = true;
+			m_clientActived = true;
 			emit clientIsActive();
 		}
 	else
 		{
-			m_clientIsActive = false;
+			m_clientActived = false;
 			emit clientIsNotActive();
 		}
-	emit clientActived(m_clientIsActive);
+	emit clientActived(m_clientActived);
 
 	while (m_continue)
 	{
@@ -168,7 +180,7 @@ void SinusOnJack::run()
 
 	jack_deactivate(m_client);
 	jack_port_unregister(m_client,
-											 m_portAudioOut);
+											 m_portAudioOutLeft);
 	jack_client_close(m_client);
 }
 

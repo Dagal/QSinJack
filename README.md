@@ -10,6 +10,7 @@ Ce qui fonctionne pour le moment:
 * Son monophonique
 * Vélocité activé
 * Son sinusoïdal
+* Stereo mise en place
 
 Bugs connus:
 
