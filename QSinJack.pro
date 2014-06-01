@@ -22,3 +22,6 @@ HEADERS  += MainWindow.h \
 		SinusOnJack.h
 
 FORMS    += MainWindow.ui
+
+OTHER_FILES += \
+    README.md
