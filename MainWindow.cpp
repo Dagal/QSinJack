@@ -26,3 +26,8 @@ void MainWindow::on_soundButton_clicked()
 {
 		// C'est ici qu'on demande au son de bien vouloir sortir s'il vous plait!
 }
+
+void MainWindow::on_gainSlider_valueChanged(int value)
+{
+		m_sinusOnJack->updateGain(value);
+}

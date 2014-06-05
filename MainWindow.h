@@ -26,6 +26,8 @@ public:
 private slots:
 	void on_soundButton_clicked();
 
+	void on_gainSlider_valueChanged(int value);
+
 private:
 	Ui::MainWindow *ui;
 };

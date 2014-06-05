@@ -45,12 +45,30 @@ private:
 	long m_offset;
 	unsigned char m_note;
 	jack_default_audio_sample_t m_ramp;
+	jack_default_audio_sample_t m_currentSample;
 	jack_default_audio_sample_t m_noteOn;
 	jack_default_audio_sample_t m_noteFrqs[128];
 
 	// Variable du son
 	int m_waveType;
 	bool m_limitEnabled;
+
+	// Controle physique
+	jack_default_audio_sample_t m_gain;
+	jack_default_audio_sample_t m_gain_left;
+	jack_default_audio_sample_t m_gain_right;
+	jack_default_audio_sample_t m_balance;
+	jack_default_audio_sample_t m_pan;
+	jack_default_audio_sample_t m_low;
+	jack_default_audio_sample_t m_lowCut;
+	jack_default_audio_sample_t m_medium;
+	jack_default_audio_sample_t m_mediumCut;
+	jack_default_audio_sample_t m_high;
+	jack_default_audio_sample_t m_highCut;
+	jack_default_audio_sample_t m_reverb;
+	jack_default_audio_sample_t m_chorus;
+	jack_default_audio_sample_t m_effect1;
+	jack_default_audio_sample_t m_effect2;
 
 	// Réactivité aux messages MIDI
 	bool m_velocityEnabled;
@@ -88,6 +106,7 @@ signals:
 
 public slots:
 	void stop();
+	void updateGain(int gain);
 
 };
 

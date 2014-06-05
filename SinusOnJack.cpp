@@ -17,6 +17,7 @@ SinusOnJack::SinusOnJack(QObject *parent) :
 	m_tune = 440;
 	m_velocityEnabled = true;
 	m_waveType = Sinusoide;
+	m_gain = 1.0;
 	int i;
 	for(i = 0; i < 128; ++i)
 	{
@@ -51,30 +52,35 @@ int SinusOnJack::process(jack_nframes_t nframes)
 	jack_midi_event_t inEvent;
 	jack_nframes_t eventIndex = 0;
 	jack_nframes_t eventCount = jack_midi_get_event_count(portMidiInBuffer);
-	jack_midi_event_get(&inEvent,
-											portMidiInBuffer,
-											0);
 	for(i = 0; i < nframes; ++i)
 	{
-		if(((*(inEvent.buffer) & 0xf0)) == 0x90)
+		if (eventIndex < eventCount)
 		{
-			m_note = *(inEvent.buffer + 1);
-			m_noteOn = (m_velocityEnabled)?*(inEvent.buffer + 2)/127.0:1.0;
-			cout << "Note On : " << (int)m_note << " : " << m_noteOn << endl;
+			cout << "Lecture du message " << eventIndex << endl;
+			jack_midi_event_get(&inEvent,
+													portMidiInBuffer,
+													0);
+			if(((*(inEvent.buffer) & 0xf0)) == 0x90)
+			{
+				m_note = *(inEvent.buffer + 1);
+				m_noteOn = (m_velocityEnabled)?*(inEvent.buffer + 2)/127.0:1.0;
+				cout << "Note On : " << (int)m_note << " : " << m_noteOn << "//";
+			}
+			else if(((*(inEvent.buffer)) & 0xf0) == 0x80)
+			{
+				m_note = *(inEvent.buffer + 1);
+				m_noteOn = 0.0;
+				cout << "Note Off : " << (int)m_note << "//";
+			}
+			++eventIndex;
 		}
-		else if(((*(inEvent.buffer)) & 0xf0) == 0x80)
-		{
-			m_note = *(inEvent.buffer + 1);
-			m_noteOn = 0.0;
-			cout << "Note Off : " << (int)m_note << endl;
-		}
-		++eventIndex;
-		jack_midi_event_get(&inEvent,
-												portMidiInBuffer,
-												eventIndex);
 		m_ramp += m_noteFrqs[m_note];
 		m_ramp = (m_ramp > 1.0) ? m_ramp - 2.0 : m_ramp;
-		outLeft[i] = m_noteOn*sin(2*M_PI*m_ramp);
+		jack_default_audio_sample_t sample = m_noteOn*sin(2*M_PI*m_ramp) * m_gain;
+		if (sample > m_currentSample + 0.1) sample = m_currentSample + 0.1;
+		if (sample < m_currentSample - 0.1) sample = m_currentSample - 0.1;
+		m_currentSample = sample;
+		outLeft[i] = m_currentSample;
 		outRight[i] = outLeft[i];
 	}
 	return 0;
@@ -119,7 +125,7 @@ void SinusOnJack::run()
 	jack_set_error_function(SinusOnJack::staticError);
 
 	// Ouverture du client
-	m_client = jack_client_open("MidiTest",
+	m_client = jack_client_open("QSinJack",
 															JackServerName,
 															&m_status,
 															"default");
@@ -187,4 +193,9 @@ void SinusOnJack::run()
 void SinusOnJack::stop()
 {
 	m_continue = false;
+}
+
+void SinusOnJack::updateGain(int gain)
+{
+	m_gain = gain / 100.0;
 }
