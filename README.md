@@ -11,11 +11,13 @@ Ce qui fonctionne pour le moment:
 * Vélocité activé
 * Son sinusoïdal
 * Stereo mise en place
+* Gestion du gain
 
 Bugs connus:
 
 * Gestion des "note off" incohérents
-* Le seul bouton de la fenêtre ne sert à rien
+* Le bouton reset de la fenêtre ne sert à rien
+* Un craquement dans le son s'entend à l'enclenchement du son et au changement de gain.
 
 Choses à faire:
 
